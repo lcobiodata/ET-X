@@ -76,7 +76,7 @@ class MSA(object):
 		self.size, self.length = np.array(self.sequences).shape
 		self.weights = self.Henikoff()
 		self.sequence_indices = {x:i for i,x in enumerate(self.headers)}
-		self.colection = self.colect()
+		self.collection = self.collect()
 		self.gap_content = self.count_gaps()
 	def parse(self, MSA_file):
 		try:
@@ -103,17 +103,17 @@ class MSA(object):
 				row.append(1. / (k * n)) 
 			weights.append(sum(row) / float(self.length))
 		return weights
-	def colect(self):
-		colection = {}
+	def collect(self):
+		collection = {}
 		for l in range(self.length):
-			colection[l]=[]
+			collection[l]=[]
 			for a in self.alphabet:
 				if a in self.sequences[:, l]:
 					sequence_indices = []
 					for n in range(self.size):
 						if self.sequences[n][l]==a:
 							sequence_indices.append(n)
-					colection[l].append(Residue(self, [a], l, sequence_indices))
+					collection[l].append(Residue(self, [a], l, sequence_indices))
 		if args.plus_aa:
 			for l in range(self.length): # For each column of the alignment, it looks for all possible subsets of similar amino acids.
 				temp = {}
@@ -137,8 +137,8 @@ class MSA(object):
 							if 'Similar' in ftr[i]:
 								ftr[i] = 'Similar'
 						label = ', '.join(ftr)
-						colection[l].append(Residue(self, list(aa), l, list(idx), ftr))
-		return colection
+						collection[l].append(Residue(self, list(aa), l, list(idx), ftr))
+		return collection
 	def count_gaps(self):
 		gap_content = []
 		for l in range(self.length):
@@ -171,14 +171,14 @@ class Subset(object):
 	def get_consensus(self):
 		consensus = ''
 		for l in range(self.msa.length):
-			K = [x for x in self.msa.colection[l] if len(x.amino_acids) == 1 and not x.sequence_indices.isdisjoint(self.sequence_indices)]
+			K = [x for x in self.msa.collection[l] if len(x.amino_acids) == 1 and not x.sequence_indices.isdisjoint(self.sequence_indices)]
 			if len(K)>0:
 				consensus += max(K, key=lambda x: x.p.given(self)).amino_acids[0]
 			else:
 				consensus += '-'
 		return consensus
 	def Shannon(self, position):
-		K = [x for x in self.msa.colection[position] if not x.sequence_indices.isdisjoint(self.sequence_indices)]
+		K = [x for x in self.msa.collection[position] if not x.sequence_indices.isdisjoint(self.sequence_indices)]
 		if len(K) == 0:
 			return np.log(20)
 		if args.plus_aa:
